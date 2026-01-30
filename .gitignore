@@ -1,0 +1,8 @@
+# Exclude local tools and bundles
+bundle.py
+index_portable.html
+*guide.md
+
+# OS files
+.DS_Store
+Thumbs.db

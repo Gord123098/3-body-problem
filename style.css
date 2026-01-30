@@ -1,0 +1,392 @@
+:root {
+    --bg-color: #050508;
+    --glass-bg: rgba(20, 20, 30, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --primary-accent: #00f0ff;
+    --secondary-accent: #7000ff;
+    --unstable-color: #ff0055;
+    --stable-color: #00ff88;
+    --text-main: #ffffff;
+    --text-muted: #8b9bb4;
+    --font-main: 'Outfit', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: var(--font-main);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+}
+
+#app {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    outline: none;
+}
+
+/* UI Overlay */
+.ui-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 320px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    z-index: 10;
+    transition: opacity 0.3s;
+}
+
+/* Matrix Explorer Overlay */
+#explorerOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(5, 5, 8, 0.95);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    padding: 40px;
+    opacity: 1;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+#explorerOverlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.explorer-header {
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.explorer-header h2 {
+    font-weight: 300;
+    font-size: 2rem;
+    background: linear-gradient(90deg, #fff, var(--primary-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.explorer-header button {
+    width: auto;
+    padding: 10px 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
+    color: white;
+}
+
+.explorer-header {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.explorer-content {
+    display: flex;
+    gap: 40px;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.explorer-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.control-pair {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    outline: none;
+    font-family: var(--font-main);
+    cursor: pointer;
+}
+
+select option {
+    background: var(--bg-color);
+}
+
+.explorer-hint {
+    text-align: center;
+    width: 100%;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+    margin-top: -15px;
+}
+
+#heatmapCanvas {
+    background: #000;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    cursor: crosshair;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    image-rendering: pixelated;
+    /* Sharp pixels */
+}
+
+.heatmap-info {
+    width: 300px;
+    color: var(--text-muted);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    margin: 10px 0 20px;
+    overflow: hidden;
+}
+
+#heatmapProgress {
+    width: 0%;
+    height: 100%;
+    background: var(--primary-accent);
+    transition: width 0.1s linear;
+}
+
+.legend {
+    list-style: none;
+    margin-top: 20px;
+}
+
+.legend li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.dot.stable {
+    background: var(--stable-color);
+    box-shadow: 0 0 8px var(--stable-color);
+}
+
+.dot.unstable {
+    background: var(--unstable-color);
+    box-shadow: 0 0 8px var(--unstable-color);
+}
+}
+
+.matrix-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    overflow-y: auto;
+    height: 100%;
+    padding-right: 10px;
+}
+
+.matrix-cell {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    aspect-ratio: 1;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s;
+    overflow: hidden;
+}
+
+.matrix-cell:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-accent);
+}
+
+.matrix-cell canvas {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.status-stable {
+    color: var(--stable-color);
+    border: 1px solid var(--stable-color);
+}
+
+.status-unstable {
+    color: var(--unstable-color);
+    border: 1px solid var(--unstable-color);
+}
+
+/* Common UI Elements */
+header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    background: linear-gradient(90deg, var(--text-main), var(--primary-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+}
+
+.controls-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.control-group label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+input[type="range"] {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    appearance: none;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--primary-accent);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--primary-accent);
+}
+
+.button-group {
+    display: flex;
+    gap: 12px;
+}
+
+button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-main);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, var(--secondary-accent), var(--primary-accent));
+    color: white;
+}
+
+.secondary-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.secondary-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.stats {
+    margin-top: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.stat-item .value {
+    color: var(--primary-accent);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

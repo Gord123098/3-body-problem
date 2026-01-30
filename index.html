@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3-Body Problem Simulation | 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Load Three.js globals for file:// protocol compatibility -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <canvas id="simulationCheck"></canvas>
+
+        <!-- Matrix Explorer Overlay -->
+        <div id="explorerOverlay" class="hidden">
+            <div class="explorer-header">
+                <h2>Stability Matrix Explorer</h2>
+                <div class="explorer-controls">
+                    <div class="control-pair">
+                        <label>X-Axis:</label>
+                        <select id="xAxisParam">
+                            <option value="vel_x_3" selected>Body 3 Vel X</option>
+                            <option value="vel_y_3">Body 3 Vel Y</option>
+                            <option value="pos_x_3">Body 3 Pos X</option>
+                            <option value="mass_3">Body 3 Mass</option>
+                            <option value="mass_1">Body 1 Mass</option>
+                        </select>
+                    </div>
+                    <div class="control-pair">
+                        <label>Y-Axis:</label>
+                        <select id="yAxisParam">
+                            <option value="vel_x_3">Body 3 Vel X</option>
+                            <option value="vel_y_3" selected>Body 3 Vel Y</option>
+                            <option value="pos_z_3">Body 3 Pos Z</option>
+                            <option value="mass_2">Body 2 Mass</option>
+                        </select>
+                    </div>
+                    <button id="resetViewBtn" class="secondary-btn small">Reset View</button>
+                    <button id="closeExplorerBtn">Back to 3D View</button>
+                </div>
+            </div>
+            <p class="explorer-hint">Scroll to Zoom • Drag to Pan • Click to Launch</p>
+            <div class="explorer-content">
+                <canvas id="heatmapCanvas" width="800" height="800"></canvas>
+                <div class="heatmap-info">
+                    <h3>Simulation Progress</h3>
+                    <div class="progress-bar">
+                        <div id="heatmapProgress"></div>
+                    </div>
+                    <p id="heatmapStatus">Hover over the map to see parameters...</p>
+                    <ul class="legend">
+                        <li><span class="dot stable"></span> Stable (Long duration)</li>
+                        <li><span class="dot unstable"></span> Unstable (Quick ejection)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui-overlay" id="mainUI">
+            <header>
+                <h1>Three-Body Dynamics</h1>
+                <p class="subtitle">Euler-Lagrange 3D Visualization</p>
+            </header>
+
+            <div class="controls-panel">
+                <div class="control-group">
+                    <label>Simulation Speed</label>
+                    <input type="range" id="timeStep" min="0.1" max="3.0" step="0.1" value="1.0">
+                </div>
+
+                <div class="button-group">
+                    <button id="explorerBtn" class="primary-btn">Stability Explorer</button>
+                </div>
+
+                <div class="button-group">
+                    <button id="resetBtn" class="secondary-btn">Reset</button>
+                    <button id="pauseBtn" class="secondary-btn">Pause</button>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="label">Total Energy</span>
+                        <span class="value" id="energyVal">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Standard script tag (not module) -->
+    <script src="script.js"></script>
+</body>
+
+</html>
