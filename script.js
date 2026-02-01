@@ -26,7 +26,9 @@ class PhysicsEngine {
         this.bodies = [];
         this.G = 1000;
         this.softening = 5;
-        this.dt = 0.15;
+        this.dt = 0.15; // Visual speed multiplier
+        this.fixedDt = 0.01; // Physics always steps by this amount
+        this.accumulator = 0;
     }
 
     loadConfig(config) {
@@ -56,37 +58,38 @@ class PhysicsEngine {
         return acc;
     }
 
+    integrate(dt) {
+        const state = this.bodies.map(b => ({ pos: b.pos.clone(), vel: b.vel.clone(), mass: b.mass }));
+
+        // RK4
+        const a1 = this.getAccelerations(state);
+        const v1 = state.map(s => s.vel);
+
+        const s2 = state.map((s, i) => ({ pos: s.pos.add(v1[i].mult(dt * 0.5)), vel: s.vel.add(a1[i].mult(dt * 0.5)), mass: s.mass }));
+        const a2 = this.getAccelerations(s2);
+        const v2 = s2.map(s => s.vel);
+
+        const s3 = state.map((s, i) => ({ pos: s.pos.add(v2[i].mult(dt * 0.5)), vel: s.vel.add(a2[i].mult(dt * 0.5)), mass: s.mass }));
+        const a3 = this.getAccelerations(s3);
+        const v3 = s3.map(s => s.vel);
+
+        const s4 = state.map((s, i) => ({ pos: s.pos.add(v3[i].mult(dt)), vel: s.vel.add(a3[i].mult(dt)), mass: s.mass }));
+        const a4 = this.getAccelerations(s4);
+        const v4 = s4.map(s => s.vel);
+
+        for (let i = 0; i < this.bodies.length; i++) {
+            const dv = a1[i].add(a2[i].mult(2)).add(a3[i].mult(2)).add(a4[i]).mult(dt / 6);
+            const dx = v1[i].add(v2[i].mult(2)).add(v3[i].mult(2)).add(v4[i]).mult(dt / 6);
+            this.bodies[i].vel = this.bodies[i].vel.add(dv);
+            this.bodies[i].pos = this.bodies[i].pos.add(dx);
+        }
+    }
+
     step() {
-        // Sub-stepping for stability
-        const MAX_DT = 0.05;
-        const steps = Math.ceil(this.dt / MAX_DT);
-        const subDt = this.dt / steps;
-
-        for (let k = 0; k < steps; k++) {
-            const state = this.bodies.map(b => ({ pos: b.pos.clone(), vel: b.vel.clone(), mass: b.mass }));
-
-            // RK4
-            const a1 = this.getAccelerations(state);
-            const v1 = state.map(s => s.vel);
-
-            const s2 = state.map((s, i) => ({ pos: s.pos.add(v1[i].mult(subDt * 0.5)), vel: s.vel.add(a1[i].mult(subDt * 0.5)), mass: s.mass }));
-            const a2 = this.getAccelerations(s2);
-            const v2 = s2.map(s => s.vel);
-
-            const s3 = state.map((s, i) => ({ pos: s.pos.add(v2[i].mult(subDt * 0.5)), vel: s.vel.add(a2[i].mult(subDt * 0.5)), mass: s.mass }));
-            const a3 = this.getAccelerations(s3);
-            const v3 = s3.map(s => s.vel);
-
-            const s4 = state.map((s, i) => ({ pos: s.pos.add(v3[i].mult(subDt)), vel: s.vel.add(a3[i].mult(subDt)), mass: s.mass }));
-            const a4 = this.getAccelerations(s4);
-            const v4 = s4.map(s => s.vel);
-
-            for (let i = 0; i < this.bodies.length; i++) {
-                const dv = a1[i].add(a2[i].mult(2)).add(a3[i].mult(2)).add(a4[i]).mult(subDt / 6);
-                const dx = v1[i].add(v2[i].mult(2)).add(v3[i].mult(2)).add(v4[i]).mult(subDt / 6);
-                this.bodies[i].vel = this.bodies[i].vel.add(dv);
-                this.bodies[i].pos = this.bodies[i].pos.add(dx);
-            }
+        this.accumulator += this.dt;
+        while (this.accumulator >= this.fixedDt) {
+            this.integrate(this.fixedDt);
+            this.accumulator -= this.fixedDt;
         }
     }
 
