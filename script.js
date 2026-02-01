@@ -27,8 +27,9 @@ class PhysicsEngine {
         this.G = 1000;
         this.softening = 5;
         this.dt = 0.15; // Visual speed multiplier
-        this.fixedDt = 0.01; // Physics always steps by this amount
-        this.accumulator = 0;
+        this.fixedDt = 0.01; // Physics integration step (seconds)
+        this.fixedStepUs = 10000; // Physics integration step (microseconds)
+        this.accumulatorUs = 0; // Integer accumulator
     }
 
     loadConfig(config) {
@@ -86,10 +87,11 @@ class PhysicsEngine {
     }
 
     step() {
-        this.accumulator += this.dt;
-        while (this.accumulator >= this.fixedDt) {
+        const dtUs = Math.round(this.dt * 1000000); // Convert float dt to integer microseconds
+        this.accumulatorUs += dtUs;
+        while (this.accumulatorUs >= this.fixedStepUs) {
             this.integrate(this.fixedDt);
-            this.accumulator -= this.fixedDt;
+            this.accumulatorUs -= this.fixedStepUs;
         }
     }
 
