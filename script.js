@@ -27,9 +27,13 @@ class PhysicsEngine {
         this.G = 1000;
         this.softening = 5;
         this.dt = 0.15; // Visual speed multiplier
-        this.fixedDt = 0.01; // Physics integration step (seconds)
-        this.fixedStepUs = 10000; // Physics integration step (microseconds)
+        this.fixedDt = 0.002; // High precision: 2ms physics steps
+        this.fixedStepUs = 2000; // 2000 microseconds
         this.accumulatorUs = 0; // Integer accumulator
+    }
+
+    reset() {
+        this.accumulatorUs = 0;
     }
 
     loadConfig(config) {
@@ -349,7 +353,7 @@ function init() {
     const physics = new PhysicsEngine(), visuals = new VisualEngine('simulationCheck');
     let isRunning = true, config = JSON.parse(JSON.stringify(INITIAL_CONFIG));
 
-    const reset = () => { physics.loadConfig(config); visuals.initBodies(physics.bodies); };
+    const reset = () => { physics.reset(); physics.loadConfig(config); visuals.initBodies(physics.bodies); };
     reset();
 
     const explorer = new HeatmapExplorer('heatmapCanvas', (newCfg) => { config = newCfg; reset(); isRunning = true; });
